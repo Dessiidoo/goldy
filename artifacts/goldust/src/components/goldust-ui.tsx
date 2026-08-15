@@ -1,0 +1,121 @@
+import { useState, type ReactNode } from 'react';
+import { Link, useLocation } from 'wouter';
+import { ArrowUpRight, BookOpen, Bot, ChevronRight, CircleHelp, House, LineChart, Menu, MessageCircle, PiggyBank, Send, ShieldCheck, Sparkles, X } from 'lucide-react';
+import { useSendChatMessage } from '@workspace/api-client-react';
+
+const navItems = [
+  { href: '/', label: 'Command center', icon: House },
+  { href: '/signals', label: 'Signals', icon: LineChart },
+  { href: '/portfolio', label: 'Paper portfolio', icon: PiggyBank },
+  { href: '/learn', label: 'Learn', icon: BookOpen },
+];
+
+export function GoldustShell({ children }: { children: ReactNode }) {
+  const [location] = useLocation();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  return (
+    <div className="goldust-grain min-h-[100dvh] bg-background text-foreground">
+      <aside className={`fixed inset-y-0 left-0 z-40 flex w-[248px] flex-col border-r border-sidebar-border bg-sidebar px-5 py-6 transition-transform duration-300 lg:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="mb-12 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3" data-testid="link-brand">
+            <span className="grid h-9 w-9 place-items-center rounded-xl border border-primary/50 bg-primary/10 text-primary">
+              <span className="font-display text-2xl leading-none">G</span>
+            </span>
+            <span>
+              <span className="block font-display text-2xl leading-none tracking-wide text-accent">Goldust</span>
+              <span className="mt-1 block font-mono text-[8px] uppercase tracking-[.28em] text-muted-foreground">financial intelligence</span>
+            </span>
+          </Link>
+          <button type="button" className="rounded-lg p-2 text-muted-foreground lg:hidden" onClick={() => setMobileOpen(false)} data-testid="button-close-menu"><X size={18} /></button>
+        </div>
+        <div className="mb-4 px-3 font-mono text-[9px] uppercase tracking-[.22em] text-muted-foreground">Workspace</div>
+        <nav className="space-y-1">
+          {navItems.map(({ href, label, icon: Icon }) => {
+            const active = href === '/' ? location === '/' : location.startsWith(href);
+            return <Link key={href} href={href} onClick={() => setMobileOpen(false)} className={`group flex items-center justify-between rounded-xl px-3 py-3 text-sm transition-colors ${active ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground'}`} data-testid={`link-nav-${label.toLowerCase().replaceAll(' ', '-')}`}>
+              <span className="flex items-center gap-3"><Icon size={17} strokeWidth={active ? 2 : 1.6} /><span>{label}</span></span>
+              {active && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
+            </Link>;
+          })}
+        </nav>
+        <div className="mt-auto rounded-2xl border border-primary/20 bg-primary/[.06] p-4">
+          <div className="mb-3 flex items-center gap-2 text-primary"><ShieldCheck size={15} /><span className="font-mono text-[9px] uppercase tracking-[.2em]">Paper mode</span></div>
+          <p className="text-xs leading-relaxed text-muted-foreground">Every signal is an explanation, never a promise. Broker actions will always require your approval.</p>
+          <Link href="/learn" className="mt-4 flex items-center gap-1 text-xs font-semibold text-accent hover:text-primary" data-testid="link-learn-paper-mode">How Goldust thinks <ArrowUpRight size={13} /></Link>
+        </div>
+        <div className="mt-6 flex items-center gap-3 border-t border-sidebar-border pt-5">
+          <div className="grid h-8 w-8 place-items-center rounded-full bg-secondary font-mono text-xs text-primary">AS</div>
+          <div><p className="text-xs font-semibold">Avery's workspace</p><p className="text-[10px] text-muted-foreground">Long horizon · steady pace</p></div>
+        </div>
+      </aside>
+      {mobileOpen && <button type="button" aria-label="Close navigation" className="fixed inset-0 z-30 bg-background/70 backdrop-blur-sm lg:hidden" onClick={() => setMobileOpen(false)} data-testid="button-mobile-overlay" />}
+      <main className="min-h-[100dvh] lg:pl-[248px]">
+        <header className="sticky top-0 z-20 flex h-[72px] items-center justify-between border-b border-border/70 bg-background/85 px-5 backdrop-blur-xl sm:px-8 lg:px-12">
+          <button type="button" onClick={() => setMobileOpen(true)} className="rounded-lg p-2 text-muted-foreground lg:hidden" data-testid="button-open-menu"><Menu size={20} /></button>
+          <div className="hidden items-center gap-2 text-xs text-muted-foreground sm:flex"><span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_0_4px_hsl(39_78%_62%/0.1)]" />Markets monitored <span className="font-mono text-[10px] text-primary">LIVE</span></div>
+          <div className="ml-auto flex items-center gap-3">
+            <span className="hidden font-mono text-[10px] uppercase tracking-widest text-muted-foreground md:block">Personal intelligence / 01</span>
+            <button type="button" className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary" data-testid="button-help"><CircleHelp size={16} /></button>
+          </div>
+        </header>
+        {children}
+      </main>
+      <ChatDock />
+    </div>
+  );
+}
+
+export function SectionHeading({ eyebrow, title, description, action }: { eyebrow: string; title: string; description?: string; action?: ReactNode }) {
+  return <div className="mb-7 flex items-end justify-between gap-4">
+    <div><div className="mb-2 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[.22em] text-primary"><span className="h-px w-5 bg-primary" />{eyebrow}</div><h1 className="font-display text-4xl leading-[.95] text-accent sm:text-5xl">{title}</h1>{description && <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">{description}</p>}</div>
+    {action}
+  </div>;
+}
+
+export function LoadingBlock({ lines = 3 }: { lines?: number }) {
+  return <div className="space-y-3" data-testid="status-loading">{Array.from({ length: lines }).map((_, i) => <div key={i} className={`skeleton rounded-lg ${i === 0 ? 'h-7 w-2/5' : i === 1 ? 'h-4 w-4/5' : 'h-16 w-full'}`} />)}</div>;
+}
+
+export function ErrorBlock({ label = 'This view could not load.' }: { label?: string }) {
+  return <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-6" data-testid="status-error"><p className="font-semibold text-destructive">{label}</p><p className="mt-2 text-sm text-muted-foreground">The source may be taking a breath. Try again in a moment.</p></div>;
+}
+
+export function EmptyBlock({ label, detail }: { label: string; detail: string }) {
+  return <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center" data-testid="status-empty"><Sparkles className="mx-auto mb-3 text-primary" size={20} /><p className="font-semibold text-accent">{label}</p><p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">{detail}</p></div>;
+}
+
+export function Metric({ label, value, detail, tone = 'default' }: { label: string; value: string; detail?: string; tone?: 'default' | 'positive' | 'negative' }) {
+  return <div><p className="font-mono text-[9px] uppercase tracking-[.19em] text-muted-foreground">{label}</p><p className={`mt-2 font-display text-3xl ${tone === 'positive' ? 'text-primary' : tone === 'negative' ? 'text-destructive' : 'text-accent'}`} data-testid={`metric-${label.toLowerCase().replaceAll(' ', '-')}`}>{value}</p>{detail && <p className="mt-1 text-xs text-muted-foreground">{detail}</p>}</div>;
+}
+
+export function Sparkline({ values = [], positive = true }: { values?: number[]; positive?: boolean }) {
+  if (!values.length) return <div className="h-8 w-20 rounded skeleton" />;
+  const min = Math.min(...values); const max = Math.max(...values); const span = max - min || 1;
+  const points = values.map((v, i) => `${(i / (values.length - 1 || 1)) * 100},${28 - ((v - min) / span) * 24}`).join(' ');
+  return <svg viewBox="0 0 100 30" className={`h-8 w-24 ${positive ? 'text-primary' : 'text-destructive'}`} fill="none" aria-label="Trend sparkline"><polyline points={points} vectorEffect="non-scaling-stroke" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+}
+
+export function ChatDock() {
+  const [open, setOpen] = useState(false);
+  const [input, setInput] = useState('');
+  const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; text: string }[]>([]);
+  const chat = useSendChatMessage();
+  const send = (value = input) => {
+    const message = value.trim(); if (!message || chat.isPending) return;
+    setInput(''); setMessages((current) => [...current, { role: 'user', text: message }]);
+    chat.mutate({ data: { message } }, { onSuccess: (response) => setMessages((current) => [...current, { role: 'assistant', text: response.message }]) });
+  };
+  return <div className="fixed bottom-5 right-5 z-30 w-[calc(100%-2.5rem)] max-w-[360px] sm:right-8">
+    {open && <div className="mb-3 overflow-hidden rounded-2xl border border-primary/25 bg-card shadow-[0_20px_70px_hsl(36_17%_2%/.5)] reveal" data-testid="panel-chat">
+      <div className="flex items-center justify-between border-b border-border bg-primary/[.06] px-4 py-3"><div className="flex items-center gap-2"><span className="grid h-7 w-7 place-items-center rounded-full bg-primary text-primary-foreground"><Bot size={15} /></span><div><p className="text-sm font-semibold text-accent">Ask Goldust</p><p className="font-mono text-[9px] uppercase tracking-wider text-primary">source-aware tutor</p></div></div><button type="button" onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground" data-testid="button-close-chat"><X size={16} /></button></div>
+      <div className="max-h-[280px] space-y-3 overflow-y-auto p-4">
+        {!messages.length && <div className="py-4 text-center"><MessageCircle className="mx-auto mb-3 text-primary" size={22} /><p className="text-sm font-semibold text-accent">What would you like to understand?</p><p className="mt-1 text-xs leading-relaxed text-muted-foreground">Ask for a plain-language explanation. Goldust teaches, it does not place orders.</p></div>}
+        {messages.map((message, index) => <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}><div className={`max-w-[88%] rounded-xl px-3 py-2 text-xs leading-relaxed ${message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-foreground'}`}>{message.text}</div></div>)}
+        {chat.isPending && <div className="flex justify-start"><div className="skeleton h-8 w-28 rounded-xl" /></div>}
+        {chat.isError && <p className="text-xs text-destructive" data-testid="status-chat-error">Goldust could not answer right now. Try again.</p>}
+      </div>
+      <div className="border-t border-border p-3"><div className="flex items-center gap-2 rounded-xl border border-input bg-background px-3 py-1"><input value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && send()} placeholder="Ask about a concept..." className="min-w-0 flex-1 bg-transparent py-2 text-xs outline-none placeholder:text-muted-foreground" data-testid="input-chat-message" /><button type="button" onClick={() => send()} className="text-primary disabled:opacity-40" disabled={!input.trim() || chat.isPending} data-testid="button-send-chat"><Send size={15} /></button></div></div>
+    </div>}
+    <button type="button" onClick={() => setOpen((value) => !value)} className="group ml-auto flex items-center gap-3 rounded-full border border-primary/40 bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-[0_12px_35px_hsl(39_78%_62%/.18)] transition-transform hover:-translate-y-0.5" data-testid="button-toggle-chat"><span className="grid h-7 w-7 place-items-center rounded-full bg-primary-foreground/15"><MessageCircle size={16} /></span><span>{open ? 'Close tutor' : 'Ask Goldust'}</span><ChevronRight className={`transition-transform ${open ? 'rotate-90' : ''}`} size={15} /></button>
+  </div>;
+}

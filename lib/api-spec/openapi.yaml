@@ -10,6 +10,12 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: intelligence
+    description: Goldust market intelligence
+  - name: portfolio
+    description: Paper portfolio planning
+  - name: conversation
+    description: Goldust educational conversation
 paths:
   /healthz:
     get:
@@ -24,6 +30,100 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /market/overview:
+    get:
+      operationId: getMarketOverview
+      tags: [intelligence]
+      summary: Get the current market overview
+      description: Returns a source-backed snapshot of major indices, crypto, breadth, and regime context.
+      responses:
+        "200":
+          description: Market overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketOverview"
+  /market/news:
+    get:
+      operationId: getMarketNews
+      tags: [intelligence]
+      summary: Get the latest market news
+      description: Returns recent finance headlines and source metadata.
+      responses:
+        "200":
+          description: Market news
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NewsItem"
+  /signals:
+    get:
+      operationId: getSignals
+      tags: [intelligence]
+      summary: Get current predictive signals
+      description: Returns transparent, directional signals with confidence and rationale.
+      responses:
+        "200":
+          description: Predictive signals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Signal"
+  /portfolio:
+    get:
+      operationId: getPortfolio
+      tags: [portfolio]
+      summary: Get the paper portfolio
+      description: Returns the user's starting paper portfolio and performance summary.
+      responses:
+        "200":
+          description: Portfolio summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PortfolioSummary"
+  /portfolio/contributions:
+    post:
+      operationId: addContribution
+      tags: [portfolio]
+      summary: Add a paper contribution
+      description: Adds a simulated contribution to the paper portfolio.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContributionInput"
+      responses:
+        "200":
+          description: Updated portfolio summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PortfolioSummary"
+  /chat:
+    post:
+      operationId: sendChatMessage
+      tags: [conversation]
+      summary: Ask Goldust a financial question
+      description: Returns an educational, source-aware response. This endpoint never places orders.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatInput"
+      responses:
+        "200":
+          description: Goldust response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatResponse"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +133,118 @@ components:
           type: string
       required:
         - status
+    Quote:
+      type: object
+      required: [symbol, name, price, change, changePercent, direction]
+      properties:
+        symbol: { type: string }
+        name: { type: string }
+        price: { type: number }
+        change: { type: number }
+        changePercent: { type: number }
+        direction: { type: string, enum: [up, down, flat] }
+        sparkline:
+          type: array
+          items: { type: number }
+    MarketOverview:
+      type: object
+      required: [asOf, regime, regimeScore, indices, crypto, breadth]
+      properties:
+        asOf: { type: string }
+        regime: { type: string }
+        regimeScore: { type: number }
+        indices:
+          type: array
+          items: { $ref: "#/components/schemas/Quote" }
+        crypto:
+          type: array
+          items: { $ref: "#/components/schemas/Quote" }
+        breadth:
+          type: object
+          required: [advancing, declining, sentiment]
+          properties:
+            advancing: { type: number }
+            declining: { type: number }
+            sentiment: { type: string }
+    NewsItem:
+      type: object
+      required: [id, title, source, publishedAt, sentiment, url]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        source: { type: string }
+        publishedAt: { type: string }
+        sentiment: { type: string, enum: [positive, neutral, negative] }
+        url: { type: string }
+        tickers:
+          type: array
+          items: { type: string }
+    Signal:
+      type: object
+      required: [id, asset, thesis, direction, confidence, horizon, drivers, risk]
+      properties:
+        id: { type: string }
+        asset: { type: string }
+        thesis: { type: string }
+        direction: { type: string, enum: [accumulate, watch, reduce] }
+        confidence: { type: number }
+        horizon: { type: string }
+        drivers:
+          type: array
+          items: { type: string }
+        risk: { type: string }
+        sources:
+          type: array
+          items: { type: string }
+    Holding:
+      type: object
+      required: [symbol, name, quantity, value, allocation, changePercent]
+      properties:
+        symbol: { type: string }
+        name: { type: string }
+        quantity: { type: number }
+        value: { type: number }
+        allocation: { type: number }
+        changePercent: { type: number }
+    PortfolioSummary:
+      type: object
+      required: [mode, totalValue, invested, gain, gainPercent, cash, holdings, goal]
+      properties:
+        mode: { type: string, enum: [paper, connected] }
+        totalValue: { type: number }
+        invested: { type: number }
+        gain: { type: number }
+        gainPercent: { type: number }
+        cash: { type: number }
+        holdings:
+          type: array
+          items: { $ref: "#/components/schemas/Holding" }
+        goal:
+          type: object
+          required: [label, target, progress]
+          properties:
+            label: { type: string }
+            target: { type: number }
+            progress: { type: number }
+    ContributionInput:
+      type: object
+      required: [amount]
+      properties:
+        amount: { type: number, minimum: 1 }
+    ChatInput:
+      type: object
+      required: [message]
+      properties:
+        message: { type: string, minLength: 1 }
+        context:
+          type: string
+    ChatResponse:
+      type: object
+      required: [message, disclaimer, suggestedQuestions]
+      properties:
+        message: { type: string }
+        disclaimer: { type: string }
+        suggestedQuestions:
+          type: array
+          items: { type: string }
 

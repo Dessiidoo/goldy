@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Goldust"
+description = "A premium personal financial intelligence workspace with market signals, source-backed analysis, an educational AI chat, and guarded paper-portfolio planning for long-term nest-egg building."
+version = "1.0.0"
+id = "artifacts/goldust"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21815
+
+[services.development]
+run = "pnpm --filter @workspace/goldust run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/goldust", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/goldust/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21815"
+BASE_PATH = "/"
