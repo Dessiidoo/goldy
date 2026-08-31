@@ -1,5 +1,4 @@
 import { type ReactNode } from 'react';
-import { setBaseUrl } from '@workspace/api-client-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
@@ -8,8 +7,6 @@ import NotFound from '@/pages/not-found';
 import Home from '@/pages/home';
 import { GoldustShell } from '@/components/goldust-ui';
 import { Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
-
-setBaseUrl('https://goldy-vcue.onrender.com');
 
 const queryClient = new QueryClient();
 
