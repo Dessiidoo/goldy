@@ -7,31 +7,41 @@ const disclaimer = "Dawn provides analytical predictions, not guarantees or fina
 const suggestedQuestions = ["Will this company become significant in its market?", "Which opportunity has the best chance of succeeding?", "What could make this prediction wrong?"];
 type PredictionResult = { text: string } | { error: string };
 
+// Gemini REST structured-output schemas use lowercase JSON/OpenAPI types.
 const predictionSchema = {
-  type: "OBJECT",
+  type: "object",
   properties: {
-    prediction: { type: "STRING" },
+    prediction: { type: "string" },
     outcomes: {
-      type: "ARRAY",
+      type: "array",
       minItems: 3,
       maxItems: 4,
       items: {
-        type: "OBJECT",
+        type: "object",
         properties: {
-          label: { type: "STRING" },
-          probability: { type: "INTEGER", minimum: 0, maximum: 100 },
+          label: { type: "string" },
+          probability: { type: "integer", minimum: 0, maximum: 100 },
         },
         required: ["label", "probability"],
       },
     },
-    decision: { type: "STRING", enum: ["PURSUE", "WATCH", "CONSIDER", "AVOID", "INSUFFICIENT EVIDENCE"] },
-    why: { type: "ARRAY", items: { type: "STRING" }, minItems: 1, maxItems: 5 },
-    whatCouldChangeIt: { type: "STRING" },
-    evidenceQuality: { type: "STRING", enum: ["HIGH", "MODERATE", "LOW"] },
-    evidenceQualityReason: { type: "STRING" },
+    decision: { type: "string", enum: ["PURSUE", "WATCH", "CONSIDER", "AVOID", "INSUFFICIENT EVIDENCE"] },
+    why: { type: "array", items: { type: "string" }, minItems: 1, maxItems: 5 },
+    whatCouldChangeIt: { type: "string" },
+    evidenceQuality: { type: "string", enum: ["HIGH", "MODERATE", "LOW"] },
+    evidenceQualityReason: { type: "string" },
   },
   required: ["prediction", "outcomes", "decision", "why", "whatCouldChangeIt", "evidenceQuality", "evidenceQualityReason"],
 };
+
+function parsePrediction(text: string): any | null {
+  const cleaned = text
+    .trim()
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
+  try { return JSON.parse(cleaned); } catch { return null; }
+}
 
 function isValidPrediction(parsed: any): boolean {
   if (!parsed?.prediction || !Array.isArray(parsed.outcomes) || !parsed.decision || !Array.isArray(parsed.why)) return false;
@@ -44,13 +54,13 @@ async function generatePrediction(question: string, context: string): Promise<Pr
   const key = process.env.GEMINI_API_KEY;
   if (!key) return { error: "GEMINI_API_KEY is not configured" };
 
-  const prompt = `You are Dawn, a cognitive predictive decision engine. The user may ask about ANY subject: a company, person, technology, project, investment, business idea, event, or other question.
+  const prompt = `You are Dawn, a cognitive predictive decision engine.
 
-Make a defensible prediction from the supplied evidence. Do not invent facts, numbers, sources, dates, or certainty. If evidence is insufficient, say so clearly instead of manufacturing a probability.
+Make a defensible prediction from the supplied evidence. Do not invent facts, numbers, sources, dates, or certainty.
 
-Return only the requested JSON object. The response schema is enforced by the API.
+Return ONLY one JSON object matching the supplied schema. Do not use markdown fences.
 
-For predictive questions use exactly 3 or 4 mutually exclusive outcomes. Their integer probabilities MUST total exactly 100. A probability is the estimated likelihood of the defined outcome over the stated timeframe given the available evidence. Never promise profit and never recommend a specific dollar amount. If evidence is insufficient, use INSUFFICIENT EVIDENCE and explain why.
+Use exactly 3 or 4 mutually exclusive outcomes. Their integer probabilities MUST total exactly 100. If evidence is insufficient, use INSUFFICIENT EVIDENCE.
 
 CURRENT MARKET CONTEXT (use only where relevant): ${context}
 USER QUESTION: ${question}`;
@@ -88,8 +98,11 @@ USER QUESTION: ${question}`;
         continue;
       }
 
-      let parsed: any;
-      try { parsed = JSON.parse(text); } catch { lastError = `Gemini ${model} returned an invalid prediction format`; continue; }
+      const parsed = parsePrediction(text);
+      if (!parsed) {
+        lastError = `Gemini ${model} returned non-JSON prediction output`;
+        continue;
+      }
       if (!isValidPrediction(parsed)) {
         lastError = `Gemini ${model} returned an invalid prediction structure`;
         continue;
