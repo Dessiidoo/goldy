@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'wouter';
 import { CircleHelp, House, LineChart, Menu, X } from 'lucide-react';
 
@@ -12,37 +12,17 @@ export function GoldustShell({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   return <div className="goldust-grain min-h-[100dvh] bg-background text-foreground">
     <aside className={`fixed inset-y-0 left-0 z-40 flex w-[248px] flex-col border-r border-sidebar-border bg-sidebar px-5 py-6 transition-transform duration-300 lg:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-      <div className="mb-12 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3" data-testid="link-brand">
-          <span className="grid h-9 w-9 place-items-center rounded-xl border border-primary/50 bg-primary/10 text-primary"><span className="font-display text-2xl leading-none">G</span></span>
-          <span><span className="block font-display text-2xl leading-none tracking-wide text-accent">Goldust</span><span className="mt-1 block font-mono text-[8px] uppercase tracking-[.28em] text-muted-foreground">financial intelligence</span></span>
-        </Link>
-        <button type="button" className="rounded-lg p-2 text-muted-foreground lg:hidden" onClick={() => setMobileOpen(false)} data-testid="button-close-menu"><X size={18} /></button>
-      </div>
+      <div className="mb-12 flex items-center justify-between"><Link href="/" className="flex items-center gap-3" data-testid="link-brand"><span className="grid h-9 w-9 place-items-center rounded-xl border border-primary/50 bg-primary/10 text-primary"><span className="font-display text-2xl leading-none">G</span></span><span><span className="block font-display text-2xl leading-none tracking-wide text-accent">Goldust</span><span className="mt-1 block font-mono text-[8px] uppercase tracking-[.28em] text-muted-foreground">financial intelligence</span></span></Link><button type="button" className="rounded-lg p-2 text-muted-foreground lg:hidden" onClick={() => setMobileOpen(false)}><X size={18} /></button></div>
       <div className="mb-4 px-3 font-mono text-[9px] uppercase tracking-[.22em] text-muted-foreground">Workspace</div>
-      <nav className="space-y-1">
-        {navItems.map(({ href, label, icon: Icon }) => <Link key={label} href={href} onClick={() => setMobileOpen(false)} className={`group flex items-center justify-between rounded-xl px-3 py-3 text-sm transition-colors ${location === '/' ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground'}`} data-testid={`link-nav-${label.toLowerCase().replaceAll(' ', '-')}`}><span className="flex items-center gap-3"><Icon size={17} /><span>{label}</span></span></Link>)}
-      </nav>
-      <div className="mt-auto rounded-2xl border border-primary/20 bg-primary/[.06] p-4">
-        <p className="text-xs leading-relaxed text-muted-foreground">GoldDust provides analytical assessments based on available evidence. They are not guarantees or financial advice. Decisions remain yours.</p>
-      </div>
+      <nav className="space-y-1">{navItems.map(({ href, label, icon: Icon }) => <Link key={label} href={href} onClick={() => setMobileOpen(false)} className={`group flex items-center justify-between rounded-xl px-3 py-3 text-sm transition-colors ${location === '/' ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground'}`}><span className="flex items-center gap-3"><Icon size={17} /><span>{label}</span></span></Link>)}</nav>
+      <div className="mt-auto rounded-2xl border border-primary/20 bg-primary/[.06] p-4"><p className="text-xs leading-relaxed text-muted-foreground">GoldDust provides analytical assessments based on available evidence. They are not guarantees or financial advice. Decisions remain yours.</p></div>
     </aside>
-    {mobileOpen && <button type="button" aria-label="Close navigation" className="fixed inset-0 z-30 bg-background/70 backdrop-blur-sm lg:hidden" onClick={() => setMobileOpen(false)} data-testid="button-mobile-overlay" />}
-    <main className="min-h-[100dvh] lg:pl-[248px]">
-      <header className="sticky top-0 z-20 flex h-[72px] items-center justify-between border-b border-border/70 bg-background/85 px-5 backdrop-blur-xl sm:px-8 lg:px-12">
-        <button type="button" onClick={() => setMobileOpen(true)} className="rounded-lg p-2 text-muted-foreground lg:hidden" data-testid="button-open-menu"><Menu size={20} /></button>
-        <div className="hidden items-center gap-2 text-xs text-muted-foreground sm:flex"><span className="h-1.5 w-1.5 rounded-full bg-primary" />Markets monitored <span className="font-mono text-[10px] text-primary">LIVE</span></div>
-        <div className="ml-auto flex items-center gap-3"><span className="hidden font-mono text-[10px] uppercase tracking-widest text-muted-foreground md:block">Personal intelligence</span><button type="button" className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card text-muted-foreground" data-testid="button-help"><CircleHelp size={16} /></button></div>
-      </header>
-      {children}
-    </main>
+    {mobileOpen && <button type="button" aria-label="Close navigation" className="fixed inset-0 z-30 bg-background/70 backdrop-blur-sm lg:hidden" onClick={() => setMobileOpen(false)} />}
+    <main className="min-h-[100dvh] lg:pl-[248px]"><header className="sticky top-0 z-20 flex h-[72px] items-center justify-between border-b border-border/70 bg-background/85 px-5 backdrop-blur-xl sm:px-8 lg:px-12"><button type="button" onClick={() => setMobileOpen(true)} className="rounded-lg p-2 text-muted-foreground lg:hidden"><Menu size={20} /></button><div className="hidden items-center gap-2 text-xs text-muted-foreground sm:flex"><span className="h-1.5 w-1.5 rounded-full bg-primary" />Markets monitored <span className="font-mono text-[10px] text-primary">LIVE</span></div><div className="ml-auto flex items-center gap-3"><span className="hidden font-mono text-[10px] uppercase tracking-widest text-muted-foreground md:block">Personal intelligence</span><button type="button" className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card text-muted-foreground"><CircleHelp size={16} /></button></div></header>{children}</main>
   </div>;
 }
 
-export function SectionHeading({ eyebrow, title, description, action }: { eyebrow: string; title: string; description?: string; action?: ReactNode }) {
-  return <div className="mb-7 flex items-end justify-between gap-4"><div><div className="mb-2 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[.22em] text-primary"><span className="h-px w-5 bg-primary" />{eyebrow}</div><h1 className="font-display text-4xl leading-[.95] text-accent sm:text-5xl">{title}</h1>{description && <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">{description}</p>}</div>{action}</div>;
-}
-
+export function SectionHeading({ eyebrow, title, description, action }: { eyebrow: string; title: string; description?: string; action?: ReactNode }) { return <div className="mb-7 flex items-end justify-between gap-4"><div><div className="mb-2 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[.22em] text-primary"><span className="h-px w-5 bg-primary" />{eyebrow}</div><h1 className="font-display text-4xl leading-[.95] text-accent sm:text-5xl">{title}</h1>{description && <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">{description}</p>}</div>{action}</div>; }
 export function LoadingBlock({ lines = 3 }: { lines?: number }) { return <div className="space-y-3" data-testid="status-loading">{Array.from({ length: lines }).map((_, i) => <div key={i} className={`skeleton rounded-lg ${i === 0 ? 'h-7 w-2/5' : i === 1 ? 'h-4 w-4/5' : 'h-16 w-full'}`} />)}</div>; }
 export function ErrorBlock({ label = 'This view could not load.' }: { label?: string }) { return <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-6" data-testid="status-error"><p className="font-semibold text-destructive">{label}</p><p className="mt-2 text-sm text-muted-foreground">The source may be taking a breath. Try again in a moment.</p></div>; }
 export function EmptyBlock({ label, detail }: { label: string; detail: string }) { return <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center" data-testid="status-empty"><p className="font-semibold text-accent">{label}</p><p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">{detail}</p></div>; }
