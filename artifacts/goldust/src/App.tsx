@@ -7,6 +7,9 @@ import NotFound from '@/pages/not-found';
 import Home from '@/pages/home';
 import { GoldustShell } from '@/components/goldust-ui';
 import { Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
+import { setBaseUrl } from '@workspace/api-client-react';
+
+setBaseUrl('https://goldy-vcue.onrender.com');
 
 const queryClient = new QueryClient();
 
