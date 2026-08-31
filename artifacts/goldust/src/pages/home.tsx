@@ -3,9 +3,16 @@ import { ArrowUpRight, ArrowDownRight, Minus, RefreshCw } from 'lucide-react';
 import { useGetSignals, getGetSignalsQueryKey } from '@workspace/api-client-react';
 import { ErrorBlock, LoadingBlock } from '@/components/goldust-ui';
 
+const API_BASE = 'https://goldy-vcue.onrender.com';
+
 export default function Home() {
-  const query = useGetSignals({ query: { queryKey: getGetSignalsQueryKey() } });
-  const signals = useMemo(() => (query.data ?? []).slice().sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0)), [query.data]);
+  const query = useGetSignals({
+    query: { queryKey: getGetSignalsQueryKey(), baseUrl: API_BASE },
+  });
+  const signals = useMemo(
+    () => (query.data ?? []).slice().sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0)),
+    [query.data],
+  );
   const label = (direction: string) => direction === 'accumulate' ? 'BUY' : direction === 'reduce' ? 'REDUCE' : 'WATCH';
   const Icon = (direction: string) => direction === 'accumulate' ? ArrowUpRight : direction === 'reduce' ? ArrowDownRight : Minus;
 
@@ -15,7 +22,7 @@ export default function Home() {
       <button type="button" onClick={() => void query.refetch()} className="flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-xs text-muted-foreground hover:border-primary hover:text-primary"><RefreshCw size={14} />Refresh</button>
     </div>
 
-    {query.isLoading ? <div className="goldust-panel rounded-2xl p-6"><LoadingBlock lines={5} /></div> : query.isError ? <ErrorBlock label="Live opportunities could not be loaded." /> : !signals.length ? <div className="goldust-panel rounded-2xl p-8 text-center"><p className="font-semibold text-accent">No opportunities detected right now.</p><p className="mt-2 text-sm text-muted-foreground">GoldDust will not manufacture a signal when the evidence is not there.</p></div> : <div className="space-y-8">
+    {query.isLoading ? <div className="goldust-panel rounded-2xl p-6"><LoadingBlock lines={5} /></div> : query.isError ? <ErrorBlock label="LIVE DATA UNAVAILABLE. GoldDust could not retrieve current opportunities." /> : !signals.length ? <div className="goldust-panel rounded-2xl p-8 text-center"><p className="font-semibold text-accent">No opportunities detected right now.</p><p className="mt-2 text-sm text-muted-foreground">GoldDust will not manufacture a signal when the evidence is not there.</p></div> : <div className="space-y-8">
       <OpportunityGroup title="Top opportunities" signals={signals} label={label} Icon={Icon} />
     </div>}
 
