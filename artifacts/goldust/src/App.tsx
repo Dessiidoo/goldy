@@ -5,30 +5,17 @@ import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import Home from '@/pages/home';
-import Signals from '@/pages/signals';
-import Portfolio from '@/pages/portfolio';
-import Learn from '@/pages/learn';
 import { GoldustShell } from '@/components/goldust-ui';
-import {
-  Route,
-  Switch,
-  useLocation,
-  Router as WouterRouter,
-} from 'wouter';
+import { Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
 
 const queryClient = new QueryClient();
 
 function Router() {
   return (
-    // Keep a shared shell (sidebar, navbar) outside the boundary so it
-    // survives a page crash.
     <RoutedErrorBoundary>
       <GoldustShell>
         <Switch>
           <Route path="/" component={Home} />
-          <Route path="/signals" component={Signals} />
-          <Route path="/portfolio" component={Portfolio} />
-          <Route path="/learn" component={Learn} />
           <Route component={NotFound} />
         </Switch>
       </GoldustShell>
