@@ -1,20 +1,17 @@
 import { useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'wouter';
-import { CircleHelp, House, LineChart, Menu, X } from 'lucide-react';
+import { CircleHelp, House, Menu, X } from 'lucide-react';
 
-const navItems = [
-  { href: '/', label: 'Command center', icon: House },
-  { href: '/', label: 'Signals', icon: LineChart },
-];
+const navItems = [{ href: '/', label: 'Command center', icon: House }];
 
 export function GoldustShell({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   return <div className="goldust-grain min-h-[100dvh] bg-background text-foreground">
     <aside className={`fixed inset-y-0 left-0 z-40 flex w-[248px] flex-col border-r border-sidebar-border bg-sidebar px-5 py-6 transition-transform duration-300 lg:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-      <div className="mb-12 flex items-center justify-between"><Link href="/" className="flex items-center gap-3" data-testid="link-brand"><span className="grid h-9 w-9 place-items-center rounded-xl border border-primary/50 bg-primary/10 text-primary"><span className="font-display text-2xl leading-none">G</span></span><span><span className="block font-display text-2xl leading-none tracking-wide text-accent">Goldust</span><span className="mt-1 block font-mono text-[8px] uppercase tracking-[.28em] text-muted-foreground">financial intelligence</span></span></Link><button type="button" className="rounded-lg p-2 text-muted-foreground lg:hidden" onClick={() => setMobileOpen(false)}><X size={18} /></button></div>
+      <div className="mb-12 flex items-center justify-between"><Link href="/" className="flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-xl border border-primary/50 bg-primary/10 text-primary"><span className="font-display text-2xl leading-none">G</span></span><span><span className="block font-display text-2xl leading-none tracking-wide text-accent">Goldust</span><span className="mt-1 block font-mono text-[8px] uppercase tracking-[.28em] text-muted-foreground">financial intelligence</span></span></Link><button type="button" className="rounded-lg p-2 text-muted-foreground lg:hidden" onClick={() => setMobileOpen(false)}><X size={18} /></button></div>
       <div className="mb-4 px-3 font-mono text-[9px] uppercase tracking-[.22em] text-muted-foreground">Workspace</div>
-      <nav className="space-y-1">{navItems.map(({ href, label, icon: Icon }) => <Link key={label} href={href} onClick={() => setMobileOpen(false)} className={`group flex items-center justify-between rounded-xl px-3 py-3 text-sm transition-colors ${location === '/' ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground'}`}><span className="flex items-center gap-3"><Icon size={17} /><span>{label}</span></span></Link>)}</nav>
+      <nav className="space-y-1">{navItems.map(({ href, label, icon: Icon }) => <Link key={label} href={href} onClick={() => setMobileOpen(false)} className={`group flex items-center rounded-xl px-3 py-3 text-sm transition-colors ${location === href ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground'}`}><span className="flex items-center gap-3"><Icon size={17} /><span>{label}</span></span></Link>)}</nav>
       <div className="mt-auto rounded-2xl border border-primary/20 bg-primary/[.06] p-4"><p className="text-xs leading-relaxed text-muted-foreground">GoldDust provides analytical assessments based on available evidence. They are not guarantees or financial advice. Decisions remain yours.</p></div>
     </aside>
     {mobileOpen && <button type="button" aria-label="Close navigation" className="fixed inset-0 z-30 bg-background/70 backdrop-blur-sm lg:hidden" onClick={() => setMobileOpen(false)} />}
