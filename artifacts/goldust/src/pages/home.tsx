@@ -3,7 +3,6 @@ import { Search, ShieldCheck, Database, Brain, Target, AlertTriangle, GitBranch 
 
 export default function Home() {
   const [subject, setSubject] = useState('');
-  const [date, setDate] = useState('');
   const [ran, setRan] = useState(false);
 
   const analyze = () => { if (subject.trim()) setRan(true); };
@@ -17,12 +16,11 @@ export default function Home() {
 
     <section className="goldust-panel rounded-2xl p-6 sm:p-8">
       <div className="mb-7 flex items-center gap-3"><div className="grid h-10 w-10 place-items-center rounded-xl border border-primary/30 bg-primary/10 text-primary"><Search size={18}/></div><div><h2 className="font-display text-2xl text-accent">Analyze an opportunity</h2><p className="text-xs text-muted-foreground">Start with a company, person, project, technology, or asset.</p></div></div>
-      <div className="grid gap-4 md:grid-cols-[1fr_220px_auto] md:items-end">
+      <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
         <label className="block"><span className="mb-2 block font-mono text-[9px] uppercase tracking-[.18em] text-muted-foreground">Subject</span><input value={subject} onChange={e => { setSubject(e.target.value); setRan(false); }} placeholder="e.g. Microsoft" className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-primary" /></label>
-        <label className="block"><span className="mb-2 block font-mono text-[9px] uppercase tracking-[.18em] text-muted-foreground">Analysis date</span><input type="date" value={date} onChange={e => { setDate(e.target.value); setRan(false); }} className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-primary" /></label>
         <button onClick={analyze} disabled={!subject.trim()} className="rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40">Analyze</button>
       </div>
-      <div className="mt-5 flex flex-wrap items-center gap-3 text-[10px] text-muted-foreground"><span className="rounded-full border border-primary/25 bg-primary/[.06] px-3 py-1.5 font-mono uppercase tracking-wider text-primary">Historical / blind</span><span>Future information must remain outside the analysis cutoff.</span></div>
+      <div className="mt-5 flex flex-wrap items-center gap-3 text-[10px] text-muted-foreground"><span className="rounded-full border border-primary/25 bg-primary/[.06] px-3 py-1.5 font-mono uppercase tracking-wider text-primary">Automatic historical analysis</span><span>GoldDust determines relevant timelines and protects the analysis from future information.</span></div>
     </section>
 
     {!ran && <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -30,7 +28,7 @@ export default function Home() {
     </div>}
 
     {ran && <section className="mt-8 space-y-4">
-      <div className="rounded-2xl border border-primary/25 bg-primary/[.05] p-5"><div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-primary"><ShieldCheck size={14}/> Analysis initialized</div><p className="mt-3 text-lg font-semibold text-accent">{subject}</p><p className="mt-1 text-xs text-muted-foreground">Cutoff: {date || 'not specified'} · GoldDust will only treat evidence available by the cutoff as admissible.</p></div>
+      <div className="rounded-2xl border border-primary/25 bg-primary/[.05] p-5"><div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-primary"><ShieldCheck size={14}/> Analysis initialized</div><p className="mt-3 text-lg font-semibold text-accent">{subject}</p><p className="mt-1 text-xs text-muted-foreground">GoldDust will determine the relevant historical timeline and enforce the information cutoff automatically.</p></div>
       <div className="grid gap-4 md:grid-cols-2">
         <div className="goldust-panel rounded-2xl p-6"><p className="font-mono text-[9px] uppercase tracking-[.18em] text-primary">Evidence</p><p className="mt-3 text-sm text-muted-foreground">Waiting for source-backed evidence. No synthetic numbers are displayed.</p></div>
         <div className="goldust-panel rounded-2xl p-6"><p className="font-mono text-[9px] uppercase tracking-[.18em] text-primary">Outlier factors</p><div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground"><AlertTriangle size={15} className="text-primary"/> No outlier conclusion until evidence is available.</div></div>
