@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
 import { ArrowUpRight, ArrowDownRight, Minus, RefreshCw } from 'lucide-react';
-import { useGetSignals, getGetSignalsQueryKey } from '@workspace/api-client-react';
+import { useGetSignals } from '@workspace/api-client-react';
 import { ErrorBlock, LoadingBlock } from '@/components/goldust-ui';
 
-const query = useGetSignals();
+const API_BASE = 'https://goldy-vcue.onrender.com';
 
 export default function Home() {
   const query = useGetSignals({
-    query: { queryKey: getGetSignalsQueryKey(), baseUrl: API_BASE },
+    query: { queryKey: ['signals'], baseUrl: API_BASE },
   });
   const signals = useMemo(
     () => (query.data ?? []).slice().sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0)),
