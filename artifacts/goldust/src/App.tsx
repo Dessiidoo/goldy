@@ -9,6 +9,8 @@ import Home from '@/pages/home';
 import { GoldustShell } from '@/components/goldust-ui';
 import { Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
 
+setBaseUrl('https://goldy-vcue.onrender.com');
+
 const queryClient = new QueryClient();
 
 function Router() {
