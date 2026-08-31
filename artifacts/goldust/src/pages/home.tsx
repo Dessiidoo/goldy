@@ -3,7 +3,7 @@ import { ArrowUpRight, ArrowDownRight, Minus, RefreshCw } from 'lucide-react';
 import { useGetSignals, getGetSignalsQueryKey } from '@workspace/api-client-react';
 import { ErrorBlock, LoadingBlock } from '@/components/goldust-ui';
 
-const query = useGetSignals();';
+const query = useGetSignals();
 
 export default function Home() {
   const query = useGetSignals({
