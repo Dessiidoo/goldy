@@ -26,7 +26,7 @@ USER QUESTION: ${question}`;
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${encodeURIComponent(key)}`, {
       method: "POST", headers: { "Content-Type": "application/json" }, signal: AbortSignal.timeout(30000),
-      body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { temperature: 0.1, maxOutputTokens: 1000, responseMimeType: "application/json" } }),
+      body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 1000, responseMimeType: "application/json" } }),
     });
     if (!response.ok) { const body = await response.text(); return { error: `Gemini HTTP ${response.status}: ${body.slice(0, 500)}` }; }
     const data = await response.json() as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>; promptFeedback?: { blockReason?: string } };
