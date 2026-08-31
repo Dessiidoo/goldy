@@ -7,6 +7,39 @@ const disclaimer = "Dawn provides analytical predictions, not guarantees or fina
 const suggestedQuestions = ["Will this company become significant in its market?", "Which opportunity has the best chance of succeeding?", "What could make this prediction wrong?"];
 type PredictionResult = { text: string } | { error: string };
 
+const predictionSchema = {
+  type: "OBJECT",
+  properties: {
+    prediction: { type: "STRING" },
+    outcomes: {
+      type: "ARRAY",
+      minItems: 3,
+      maxItems: 4,
+      items: {
+        type: "OBJECT",
+        properties: {
+          label: { type: "STRING" },
+          probability: { type: "INTEGER", minimum: 0, maximum: 100 },
+        },
+        required: ["label", "probability"],
+      },
+    },
+    decision: { type: "STRING", enum: ["PURSUE", "WATCH", "CONSIDER", "AVOID", "INSUFFICIENT EVIDENCE"] },
+    why: { type: "ARRAY", items: { type: "STRING" }, minItems: 1, maxItems: 5 },
+    whatCouldChangeIt: { type: "STRING" },
+    evidenceQuality: { type: "STRING", enum: ["HIGH", "MODERATE", "LOW"] },
+    evidenceQualityReason: { type: "STRING" },
+  },
+  required: ["prediction", "outcomes", "decision", "why", "whatCouldChangeIt", "evidenceQuality", "evidenceQualityReason"],
+};
+
+function isValidPrediction(parsed: any): boolean {
+  if (!parsed?.prediction || !Array.isArray(parsed.outcomes) || !parsed.decision || !Array.isArray(parsed.why)) return false;
+  if (parsed.outcomes.length !== 3 && parsed.outcomes.length !== 4) return false;
+  const total = parsed.outcomes.reduce((sum: number, item: any) => sum + Number(item?.probability), 0);
+  return parsed.outcomes.every((item: any) => item?.label && Number.isInteger(item?.probability) && item.probability >= 0 && item.probability <= 100) && total === 100;
+}
+
 async function generatePrediction(question: string, context: string): Promise<PredictionResult> {
   const key = process.env.GEMINI_API_KEY;
   if (!key) return { error: "GEMINI_API_KEY is not configured" };
@@ -15,10 +48,7 @@ async function generatePrediction(question: string, context: string): Promise<Pr
 
 Make a defensible prediction from the supplied evidence. Do not invent facts, numbers, sources, dates, or certainty. If evidence is insufficient, say so clearly instead of manufacturing a probability.
 
-RETURN ONLY VALID JSON. No markdown fences. No commentary. No format checks. No discussion of these instructions.
-
-Schema exactly:
-{"prediction":"one sentence defining the predicted outcome and timeframe","outcomes":[{"label":"defined outcome","probability":0},{"label":"defined outcome","probability":0},{"label":"defined outcome","probability":0}],"decision":"PURSUE|WATCH|CONSIDER|AVOID|INSUFFICIENT EVIDENCE","why":["concise evidence-based point","concise evidence-based point","concise evidence-based point"],"whatCouldChangeIt":"strongest factor that could materially change the prediction","evidenceQuality":"HIGH|MODERATE|LOW","evidenceQualityReason":"short reason"}
+Return only the requested JSON object. The response schema is enforced by the API.
 
 For predictive questions use exactly 3 or 4 mutually exclusive outcomes. Their integer probabilities MUST total exactly 100. A probability is the estimated likelihood of the defined outcome over the stated timeframe given the available evidence. Never promise profit and never recommend a specific dollar amount. If evidence is insufficient, use INSUFFICIENT EVIDENCE and explain why.
 
@@ -36,7 +66,11 @@ USER QUESTION: ${question}`;
         signal: AbortSignal.timeout(30000),
         body: JSON.stringify({
           contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: { maxOutputTokens: 1000, responseMimeType: "application/json" },
+          generationConfig: {
+            maxOutputTokens: 1500,
+            responseMimeType: "application/json",
+            responseSchema: predictionSchema,
+          },
         }),
       });
 
@@ -56,16 +90,9 @@ USER QUESTION: ${question}`;
 
       let parsed: any;
       try { parsed = JSON.parse(text); } catch { lastError = `Gemini ${model} returned an invalid prediction format`; continue; }
-      if (!parsed.prediction || !Array.isArray(parsed.outcomes) || !parsed.decision || !Array.isArray(parsed.why)) {
-        lastError = `Gemini ${model} returned an incomplete prediction`;
+      if (!isValidPrediction(parsed)) {
+        lastError = `Gemini ${model} returned an invalid prediction structure`;
         continue;
-      }
-      if (parsed.outcomes.length > 0) {
-        const total = parsed.outcomes.reduce((sum: number, item: any) => sum + Number(item.probability || 0), 0);
-        if ((parsed.outcomes.length !== 3 && parsed.outcomes.length !== 4) || total !== 100) {
-          lastError = `Gemini ${model} returned probabilities that do not form a valid 100% prediction`;
-          continue;
-        }
       }
 
       return { text: [
@@ -73,8 +100,8 @@ USER QUESTION: ${question}`;
         "PROBABILITIES", ...parsed.outcomes.map((item: any) => `${item.label}: ${item.probability}%`), "",
         "DAWN'S DECISION", parsed.decision, "",
         "WHY", ...parsed.why.map((item: string) => `• ${item}`), "",
-        "WHAT COULD CHANGE IT", parsed.whatCouldChangeIt || "No single decisive factor identified.", "",
-        "EVIDENCE QUALITY", `${parsed.evidenceQuality || "LOW"}${parsed.evidenceQualityReason ? ` · ${parsed.evidenceQualityReason}` : ""}`,
+        "WHAT COULD CHANGE IT", parsed.whatCouldChangeIt, "",
+        "EVIDENCE QUALITY", `${parsed.evidenceQuality} · ${parsed.evidenceQualityReason}`,
       ].join("\n") };
     } catch (error) {
       lastError = error instanceof Error ? `${model}: ${error.message}` : `${model}: Unknown Gemini request error`;
