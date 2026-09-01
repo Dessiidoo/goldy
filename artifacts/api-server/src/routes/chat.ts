@@ -43,6 +43,29 @@ function parsePrediction(text: string): any | null {
   try { return JSON.parse(cleaned); } catch { return null; }
 }
 
+function normalizeProbabilities(parsed: any): any | null {
+  if (!Array.isArray(parsed?.outcomes) || (parsed.outcomes.length !== 3 && parsed.outcomes.length !== 4)) return null;
+  const valid = parsed.outcomes.every((item: any) => item?.label && Number.isInteger(item?.probability) && item.probability >= 0 && item.probability <= 100);
+  if (!valid) return null;
+  const total = parsed.outcomes.reduce((sum: number, item: any) => sum + item.probability, 0);
+  if (total === 100) return parsed;
+  if (total <= 0) return null;
+
+  // Gemini sometimes satisfies the percentage intent but misses the exact 100-point budget.
+  // Treat those values as weights and preserve their relative proportions with integer rounding.
+  const scaled = parsed.outcomes.map((item: any, index: number) => ({ index, value: (item.probability / total) * 100 }));
+  const rounded = scaled.map(({ index, value }) => ({ index, probability: Math.floor(value), remainder: value - Math.floor(value) }));
+  let remaining = 100 - rounded.reduce((sum: number, item: any) => sum + item.probability, 0);
+  rounded.sort((a: any, b: any) => b.remainder - a.remainder || a.index - b.index);
+  for (let i = 0; i < remaining; i++) rounded[i % rounded.length].probability += 1;
+  rounded.sort((a: any, b: any) => a.index - b.index);
+
+  return {
+    ...parsed,
+    outcomes: parsed.outcomes.map((item: any, index: number) => ({ ...item, probability: rounded[index].probability })),
+  };
+}
+
 function isValidPrediction(parsed: any): boolean {
   if (!parsed?.prediction || !Array.isArray(parsed.outcomes) || !parsed.decision || !Array.isArray(parsed.why)) return false;
   if (parsed.outcomes.length !== 3 && parsed.outcomes.length !== 4) return false;
@@ -58,9 +81,9 @@ async function generatePrediction(question: string, context: string): Promise<Pr
 
 Make a defensible prediction from the supplied evidence. Do not invent facts, numbers, sources, dates, or certainty.
 
-Return ONLY one JSON object matching the supplied schema. Do not use markdown fences.
+Return ONLY one JSON object matching the supplied schema. Do not use markdown fences or explanatory text.
 
-Use exactly 3 or 4 mutually exclusive outcomes. Their integer probabilities MUST total exactly 100. If evidence is insufficient, use INSUFFICIENT EVIDENCE.
+Use exactly 3 or 4 mutually exclusive outcomes. Treat probabilities as a 100-point budget, not independent scores. Their values must be integers from 0 to 100 and MUST total exactly 100. Choose the first outcomes, then make the final outcome the exact remainder needed to reach 100. Never output decimal probabilities. If evidence is insufficient, use INSUFFICIENT EVIDENCE.
 
 CURRENT MARKET CONTEXT (use only where relevant): ${context}
 USER QUESTION: ${question}`;
@@ -103,18 +126,20 @@ USER QUESTION: ${question}`;
         lastError = `Gemini ${model} returned non-JSON prediction output`;
         continue;
       }
-      if (!isValidPrediction(parsed)) {
+
+      const normalized = normalizeProbabilities(parsed);
+      if (!normalized || !isValidPrediction(normalized)) {
         lastError = `Gemini ${model} returned an invalid prediction structure`;
         continue;
       }
 
       return { text: [
-        "PREDICTION", parsed.prediction, "",
-        "PROBABILITIES", ...parsed.outcomes.map((item: any) => `${item.label}: ${item.probability}%`), "",
-        "DAWN'S DECISION", parsed.decision, "",
-        "WHY", ...parsed.why.map((item: string) => `• ${item}`), "",
-        "WHAT COULD CHANGE IT", parsed.whatCouldChangeIt, "",
-        "EVIDENCE QUALITY", `${parsed.evidenceQuality} · ${parsed.evidenceQualityReason}`,
+        "PREDICTION", normalized.prediction, "",
+        "PROBABILITIES", ...normalized.outcomes.map((item: any) => `${item.label}: ${item.probability}%`), "",
+        "DAWN'S DECISION", normalized.decision, "",
+        "WHY", ...normalized.why.map((item: string) => `• ${item}`), "",
+        "WHAT COULD CHANGE IT", normalized.whatCouldChangeIt, "",
+        "EVIDENCE QUALITY", `${normalized.evidenceQuality} · ${normalized.evidenceQualityReason}`,
       ].join("\n") };
     } catch (error) {
       lastError = error instanceof Error ? `${model}: ${error.message}` : `${model}: Unknown Gemini request error`;
