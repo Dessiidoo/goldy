@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { SendChatMessageBody, SendChatMessageResponse } from "@workspace/api-zod";
-import { getMarketOverview, getSignals, getMarketNews } from "../lib/market-data";
+import { getMarketOverview, getSignals } from "../lib/market-data";
+import { getQuestionEvidence } from "../lib/question-evidence";
 
 const router: IRouter = Router();
 const disclaimer = "Dawn provides analytical predictions, not guarantees or financial advice. Probabilities describe the model's estimate for the defined outcomes from the evidence available now.";
@@ -85,7 +86,7 @@ Return ONLY one JSON object matching the supplied schema. Do not use markdown fe
 
 Use exactly 3 or 4 mutually exclusive outcomes. Treat probabilities as a 100-point budget, not independent scores. Their values must be integers from 0 to 100 and MUST total exactly 100. Choose the first outcomes, then make the final outcome the exact remainder needed to reach 100. Never output decimal probabilities. If evidence is insufficient, use INSUFFICIENT EVIDENCE.
 
-CURRENT MARKET CONTEXT (use only where relevant): ${context}
+CURRENT MARKET AND QUESTION-SPECIFIC EVIDENCE (use only where relevant): ${context}
 USER QUESTION: ${question}`;
 
   const models = ["gemini-3.7-flash", "gemini-3.6-flash"];
@@ -153,7 +154,11 @@ router.post("/chat", async (req, res): Promise<void> => {
   const parsed = SendChatMessageBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
   try {
-    const [overview, signals, news] = await Promise.all([getMarketOverview(), getSignals(), getMarketNews()]);
+    const [overview, signals, questionEvidence] = await Promise.all([
+      getMarketOverview(),
+      getSignals(),
+      getQuestionEvidence(parsed.data.message),
+    ]);
     const context = JSON.stringify({
       asOf: overview.asOf,
       regime: overview.regime,
@@ -161,7 +166,7 @@ router.post("/chat", async (req, res): Promise<void> => {
       breadth: overview.breadth,
       assets: [...overview.indices, ...overview.crypto].map(({ symbol, name, price, changePercent }) => ({ symbol, name, price, changePercent })),
       currentSignals: signals.map(({ asset, direction, confidence, thesis }) => ({ asset, direction, confidence, thesis })),
-      recentHeadlines: news.slice(0, 8).map(({ title, source, publishedAt, sentiment, tickers }) => ({ title, source, publishedAt, sentiment, tickers })),
+      questionSpecificEvidence: questionEvidence,
     });
     const result = await generatePrediction(parsed.data.message, context);
     if ("error" in result) {
