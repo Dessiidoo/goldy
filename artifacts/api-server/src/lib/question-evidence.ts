@@ -30,6 +30,26 @@ function classifyQuestion(question: string): string {
     ?? "technology OR AI OR stocks OR markets OR economy OR innovation";
 }
 
+function mapArticles(articles: Array<{ title?: string; source?: { name?: string }; publishedAt?: string; description?: string }>): EvidenceItem[] {
+  return articles
+    .filter((article) => article.title)
+    .slice(0, 12)
+    .map((article) => {
+      const text = `${article.title ?? ""} ${article.description ?? ""}`;
+      return {
+        title: article.title ?? "Untitled headline",
+        source: article.source?.name ?? "NewsAPI",
+        publishedAt: article.publishedAt ?? new Date().toISOString(),
+        sentiment: /surge|gain|growth|rally|upbeat|beats|breakthrough|launch|adoption|funding|investment/i.test(text)
+          ? "positive"
+          : /drop|fall|risk|crisis|weak|loss|lawsuit|cut|decline/i.test(text)
+            ? "negative"
+            : "neutral",
+        tickers: /bitcoin|crypto|ethereum|solana|blockchain/i.test(text) ? ["BTC"] : [],
+      };
+    });
+}
+
 export async function getQuestionEvidence(question: string): Promise<EvidenceItem[]> {
   const apiKey = process.env.NEWSAPI_API_KEY;
   if (!apiKey) return [];
@@ -42,23 +62,7 @@ export async function getQuestionEvidence(question: string): Promise<EvidenceIte
     );
     if (!response.ok) return [];
     const data = await response.json() as { articles?: Array<{ title?: string; source?: { name?: string }; publishedAt?: string; description?: string }> };
-    return (data.articles ?? [])
-      .filter((article) => article.title)
-      .slice(0, 12)
-      .map((article) => {
-        const text = `${article.title ?? ""} ${article.description ?? ""}`;
-        return {
-          title: article.title ?? "Untitled headline",
-          source: article.source?.name ?? "NewsAPI",
-          publishedAt: article.publishedAt ?? new Date().toISOString(),
-          sentiment: /surge|gain|growth|rally|upbeat|beats|breakthrough|launch|adoption/i.test(text)
-            ? "positive"
-            : /drop|fall|risk|crisis|weak|loss|lawsuit|cut/i.test(text)
-              ? "negative"
-              : "neutral",
-          tickers: /bitcoin|crypto|ethereum|solana|blockchain/i.test(text) ? ["BTC"] : [],
-        };
-      });
+    return mapArticles(data.articles ?? []);
   } catch {
     return [];
   }
