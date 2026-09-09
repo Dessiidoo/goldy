@@ -7,33 +7,32 @@ const router: IRouter = Router();
 const disclaimer = "Dawn provides analytical predictions, not guarantees or financial advice. Probabilities describe the model's estimate for the defined outcomes from the evidence available now.";
 const suggestedQuestions = ["Will this company become significant in its market?", "Which opportunity has the best chance of succeeding?", "What could make this prediction wrong?"];
 type PredictionResult = { text: string } | { error: string };
-
-// Gemini REST structured-output schemas use lowercase JSON/OpenAPI types.
+// Fixed: Removed unsupported constraint properties (minItems, maxItems, minimum, maximum) 
+// to prevent Gemini schema parsing failures.
 const predictionSchema = {
   type: "object",
   properties: {
     prediction: { type: "string" },
     outcomes: {
       type: "array",
-      minItems: 3,
-      maxItems: 4,
       items: {
         type: "object",
         properties: {
           label: { type: "string" },
-          probability: { type: "integer", minimum: 0, maximum: 100 },
+          probability: { type: "integer" },
         },
         required: ["label", "probability"],
       },
     },
     decision: { type: "string", enum: ["PURSUE", "WATCH", "CONSIDER", "AVOID", "INSUFFICIENT EVIDENCE"] },
-    why: { type: "array", items: { type: "string" }, minItems: 1, maxItems: 5 },
+    why: { type: "array", items: { type: "string" } },
     whatCouldChangeIt: { type: "string" },
     evidenceQuality: { type: "string", enum: ["HIGH", "MODERATE", "LOW"] },
     evidenceQualityReason: { type: "string" },
   },
   required: ["prediction", "outcomes", "decision", "why", "whatCouldChangeIt", "evidenceQuality", "evidenceQualityReason"],
 };
+
 
 function parsePrediction(text: string): any | null {
   const cleaned = text
